@@ -26,7 +26,7 @@ export default function Login() {
       // Store login state in localStorage
       localStorage.setItem("isLoggedIn", "true");
       // If credentials match, navigate to the homepage
-      router.push("/home"); // Redirect to homepage
+      router.push("/"); // Redirect to homepage
       console.log("Login successful! Redirecting to homepage...");
     } else {
       setError("Invalid email or password.");

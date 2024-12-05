@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // For navigation
+import Link from "next/link"; // Use Link for navigation between pages
 
 export default function Detect() {
   const [file, setFile] = useState(null);
@@ -48,15 +49,15 @@ export default function Detect() {
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="text-white text-xl font-bold">Fork</div>
           <div className="flex items-center space-x-6">
-            <a href="/home" className="text-white hover:text-gray-300">
+            <Link href="/" className="text-white hover:text-gray-300">
               Home
-            </a>
-            <a href="/about" className="text-white hover:text-gray-300">
+            </Link>
+            <Link href="/about" className="text-white hover:text-gray-300">
               About
-            </a>
-            <a href="/contact" className="text-white hover:text-gray-300">
+            </Link>
+            <Link href="/contact" className="text-white hover:text-gray-300">
               Contact
-            </a>
+            </Link>
             {/* Profile Icon */}
             <div className="relative">
               <button
