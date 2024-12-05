@@ -1,8 +1,50 @@
-"use client"; // Add this at the top of the file
-
+"use client";
+ 
+import { db } from "../firebaseConfig";
+import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth"; // Import Firebase Auth
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // For navigation after successful registration
-
+import { useRouter } from "next/navigation";
+ 
+// Function to encrypt the password using Caesar cipher
+function caesarCipherEncrypt(text, shift) {
+  return text
+    .split("")
+    .map((char) => {
+      if (char.match(/[a-z]/i)) {
+        const code = char.charCodeAt(0);
+        const base = code >= 65 && code <= 90 ? 65 : 97; // Check if uppercase or lowercase
+        return String.fromCharCode(((code - base + shift) % 26) + base);
+      }
+      return char; // Keep non-alphabetic characters unchanged
+    })
+    .join("");
+}
+ 
+// Function to add data to Firestore
+async function addDataToFireStore(email, password) {
+  try {
+    const q = query(collection(db, "messages"), where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+ 
+    if (!querySnapshot.empty) {
+      console.error("Email already exists");
+      return { success: false, error: "Email already registered. Please use a different email." };
+    }
+ 
+    const encryptedPassword = caesarCipherEncrypt(password, 3);
+    const docRef = await addDoc(collection(db, "messages"), {
+      email: email,
+      password: encryptedPassword,
+    });
+    console.log("Document written with ID: ", docRef.id);
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding document: ", error);
+    return { success: false, error: "Failed to register. Please try again." };
+  }
+}
+ 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -10,11 +52,12 @@ export default function Register() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const router = useRouter();
-
-  const handleSubmit = (e) => {
+  const auth = getAuth();
+  const provider = new GoogleAuthProvider();
+ 
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validation checks
+ 
     if (!email || !password || !confirmPassword) {
       setError("Please fill out all fields.");
       return;
@@ -23,24 +66,51 @@ export default function Register() {
       setError("Passwords do not match.");
       return;
     }
-
-    // Handle registration logic here (e.g., call an API for registration)
+ 
     setError(""); // Clear previous errors
-    console.log("Form submitted:", { email, password });
-
-    // Example of registration logic (replace with actual logic):
-    if (email === "test@example.com") {
-      setError("Email is already taken.");
-    } else {
-      setSuccess(true); // Set success state
-      console.log("Registration successful!");
-      // Redirect to login or home page on success
+ 
+    const result = await addDataToFireStore(email, password);
+ 
+    if (result.success) {
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setSuccess(true);
+      alert("Registration Successful!");
+ 
       setTimeout(() => {
-        router.push("/login"); // Redirect to login page after registration
-      }, 2000); // Delay to show success message
+        router.push("/login");
+      }, 2000);
+    } else {
+      setError(result.error);
     }
   };
-
+ 
+  const handleGoogleSignUp = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+ 
+      // Check if user already exists in Firestore
+      const q = query(collection(db, "messages"), where("email", "==", user.email));
+      const querySnapshot = await getDocs(q);
+ 
+      if (querySnapshot.empty) {
+        // Add the Google user to Firestore with a placeholder password
+        await addDoc(collection(db, "messages"), {
+          email: user.email,
+          password: caesarCipherEncrypt("google_default_password", 3), // Placeholder encrypted password
+        });
+      }
+ 
+      alert("Google Sign-Up Successful!");
+      router.push("/");
+    } catch (error) {
+      console.error("Error during Google Sign-Up:", error);
+      setError("Failed to sign up with Google. Please try again.");
+    }
+  };
+ 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
@@ -109,20 +179,20 @@ export default function Register() {
             Register
           </button>
         </form>
-
+ 
         {/* Google Sign Up Button */}
         <div className="mt-4 text-center">
           <button
+            onClick={handleGoogleSignUp}
             className="w-full py-2 mt-4 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
-            // OnClick should later call your Google sign-up logic
             aria-label="Sign up with Google"
           >
             Sign up with Google
           </button>
         </div>
-
+ 
         <p className="mt-4 text-sm text-center text-gray-600">
-          Already have an account?{' '}
+          Already have an account?{" "}
           <a href="/login" className="text-blue-500 hover:underline">
             Login
           </a>
@@ -131,4 +201,3 @@ export default function Register() {
     </div>
   );
 }
-
