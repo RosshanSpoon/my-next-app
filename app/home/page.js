@@ -30,7 +30,7 @@ export default function Learn() {
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="text-white text-xl font-bold">Fork</div>
           <div className="flex items-center space-x-6">
-            <Link href="/" className="text-white hover:text-gray-300">
+            <Link href="/home" className="text-white hover:text-gray-300">
               Home
             </Link>
             <Link href="/about" className="text-white hover:text-gray-300">
