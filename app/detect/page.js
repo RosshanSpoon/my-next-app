@@ -15,6 +15,8 @@ export default function Detect() {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false); // To show loading state
   const [result, setResult] = useState(null); // To store API response
+  const [textInput, setTextInput] = useState(""); // Text input state
+  const [textResult, setTextResult] = useState(null);
 
   // Handle file drop
   const handleDrop = (e) => {
@@ -93,6 +95,37 @@ export default function Detect() {
     }
   };
 
+  const handleSubmitText = async () => {
+    if (!textInput.trim()) {
+      setError("Please enter some text to detect.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setError("");
+    setTextResult(null);
+
+    try {
+      const response = await axios.post(
+        "https://api-inference.huggingface.co/models/shahxeebhassan/bert_base_ai_content_detector",
+        { inputs: textInput },
+        {
+          headers: {
+            Authorization: `Bearer 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`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setTextResult(response.data);
+    } catch (err) {
+      console.error("Error detecting text content:", err);
+      setError("Error detecting text content. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   // Toggle mobile menu
   const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
  
@@ -115,6 +148,24 @@ export default function Detect() {
       handleSubmit(file);
     }
   }, [file]);
+
+  const renderDetectionResult = () => {
+    if (textResult && textResult[0]) {
+      const label1 = textResult[0].find((item) => item.label === "LABEL_1");
+      if (label1) {
+        const aiPercentage = label1.score * 100;
+        const resultText = aiPercentage > 60 ? "AI Generated" : "Human";
+        return (
+          <div className="mt-6 text-center text-gray-600">
+            <h3 className="text-lg font-bold">Detection Results:</h3>
+            <p className="text-lg font-semibold text-blue-500">{resultText}</p>
+            <p className="text-sm text-gray-600">AI Percentage: {aiPercentage.toFixed(2)}%</p>
+          </div>
+        );
+      }
+    }
+    return null;
+  };
 
   return (
     <div className={`${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-800"} min-h-screen`}>
@@ -214,15 +265,21 @@ export default function Detect() {
         <div className="w-full max-w-2xl bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-white">Detect Content</h2>
           <p className="mt-4 text-center text-gray-600 dark:text-gray-300">
-            Upload a file to detect AI-generated content or phishing.
+            Upload a file or enter text to detect AI-generated content or phishing.
           </p>
 
           {/* Error message */}
           {error && <div className="mt-4 text-red-600 dark:text-red-400 text-sm text-center">{error}</div>}
 
+          {/* File Upload Section */}
           <div
             className="mt-8 p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex justify-center items-center"
-            onDrop={handleDrop}
+            onDrop={(e) => {
+              e.preventDefault();
+              const droppedFile = e.dataTransfer.files[0];
+              setFile(droppedFile);
+              setPreview(URL.createObjectURL(droppedFile));
+            }}
             onDragOver={(e) => e.preventDefault()}
             style={{ height: "200px" }}
           >
@@ -239,55 +296,35 @@ export default function Detect() {
                 type="file"
                 id="file-upload"
                 className="hidden"
-                onChange={handleFileChange}
+                onChange={(e) => {
+                  const selectedFile = e.target.files[0];
+                  setFile(selectedFile);
+                  setPreview(URL.createObjectURL(selectedFile));
+                }}
               />
             </div>
           </div>
 
-          {file && (
-            <div className="mt-6 text-center">
-              <p className="text-gray-600">File: {file.name}</p>
-              {/* Image Preview */}
-              {preview && (
-                <img
-                  src={preview}
-                  alt="Uploaded Preview"
-                  className="mt-4 mx-auto max-h-48 rounded shadow"
-                />
-              )}
-            </div>
-          )}
+          {/* Text Input Section */}
+          <div className="mt-8">
+            <textarea
+              className="w-full p-4 border rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white"
+              rows="4"
+              placeholder="Enter text to detect AI content..."
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+            />
+            <button
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none"
+              onClick={handleSubmitText}
+              disabled={isProcessing}
+            >
+              {isProcessing ? "Processing..." : "Detect Text"}
+            </button>
+          </div>
 
-          {/* Result or processing state */}
-          {isProcessing && (
-            <div className="mt-6 text-center text-gray-600">Processing...</div>
-          )}
-
-          {result && (
-            <div className="mt-6 text-center text-gray-600">
-              <h3 className="text-lg font-bold">Detection Results:</h3>
-
-              {/* Find the AI percentage (assuming 'artificial' is the label for AI content) */}
-              {result.map((item, index) => {
-                if (item.label === "artificial") {
-                  const aiPercentage = item.score * 100;
-
-                  // Determine AI or Human based on percentage
-                  const label = aiPercentage > 60 ? "AI Generated" : "Human";
-
-                  return (
-                    <div key={index} className="mt-4">
-                      <p className="text-lg font-semibold text-blue-500">{label}</p>
-                      <p className="text-sm text-gray-600">
-                        AI Percentage: {aiPercentage.toFixed(2)}%
-                      </p>
-                    </div>
-                  );
-                }
-                return null;
-              })}
-            </div>
-          )}
+          {/* Display Results */}
+          {renderDetectionResult()}
         </div>
       </div>
     </div>
