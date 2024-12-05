@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // For navigation
+import axios from "axios";
 
 export default function Detect() {
   const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(""); // For image preview
   const [error, setError] = useState("");
   const router = useRouter();
+  const [isProcessing, setIsProcessing] = useState(false); // To show loading state
+  const [result, setResult] = useState(null); // To store API response
 
   // Handle file drop
   const handleDrop = (e) => {
@@ -16,6 +20,7 @@ export default function Detect() {
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       setFile(droppedFile);
+      setPreview(URL.createObjectURL(droppedFile)); // Set the preview URL
       setError(""); // Clear any previous errors
     }
   };
@@ -25,20 +30,60 @@ export default function Detect() {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       setFile(selectedFile);
+      setPreview(URL.createObjectURL(selectedFile)); // Set the preview URL
       setError(""); // Clear any previous errors
     }
   };
 
   // Handle form submission (if needed for further processing)
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file) {
       setError("Please upload a file to detect.");
       return;
     }
 
-    // Proceed with file processing (for demo purposes, we just log the file)
-    console.log("File uploaded:", file);
+    console.log("File uploaded:", file); // Log uploaded file
+
+    setIsProcessing(true);
+    setError(""); // Clear previous errors
+    setResult(null); // Reset result
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      console.log("Sending request to Hugging Face API...");
+
+      const fileBytes = await file.arrayBuffer();
+      const base64EncodedImage = btoa(
+        new Uint8Array(fileBytes).reduce(
+          (data, byte) => data + String.fromCharCode(byte),
+          ""
+        )
+      );
+
+      const response = await axios.post(
+        "https://api-inference.huggingface.co/models/umm-maybe/AI-image-detector/", // Replace with the actual model URL
+        { inputs: base64EncodedImage }, // Model expects image in this format
+        {
+          headers: {
+            "Authorization": `Bearer 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`, // Replace with your Hugging Face API key
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // Log the full response to check its structure
+      console.log("Response from Hugging Face:", response.data);
+
+      setResult(response.data); // Store the result in state
+    } catch (err) {
+      console.error("Error in request:", err);
+      setError("Error detecting AI content. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -57,27 +102,6 @@ export default function Detect() {
             <a href="/contact" className="text-white hover:text-gray-300">
               Contact
             </a>
-            {/* Profile Icon */}
-            <div className="relative">
-              <button
-                className="text-white hover:text-gray-300"
-                onClick={() => router.push("/profile")}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="w-6 h-6"
-                >
-                  <path
-                    fill="currentColor"
-                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zM12 14c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                  />
-                </svg>
-              </button>
-            </div>
           </div>
         </div>
       </nav>
@@ -120,6 +144,33 @@ export default function Detect() {
           {file && (
             <div className="mt-6 text-center">
               <p className="text-gray-600">File: {file.name}</p>
+              {/* Image Preview */}
+              {preview && (
+                <img
+                  src={preview}
+                  alt="Uploaded Preview"
+                  className="mt-4 mx-auto max-h-48 rounded shadow"
+                />
+              )}
+            </div>
+          )}
+
+          {/* Result or processing state */}
+          {isProcessing && (
+            <div className="mt-6 text-center text-gray-600">Processing...</div>
+          )}
+
+          {result && (
+            <div className="mt-6 text-center text-gray-600">
+              <h3 className="text-lg font-bold">Detection Results:</h3>
+              <ul className="mt-4">
+                {result.map((item, index) => (
+                  <li key={index} className="mt-2">
+                    <span className="font-semibold">{item.label}</span>:{" "}
+                    <span>{(item.score * 100).toFixed(2)}%</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
