@@ -274,12 +274,7 @@ export default function Detect() {
           {/* File Upload Section */}
           <div
             className="mt-8 p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex justify-center items-center"
-            onDrop={(e) => {
-              e.preventDefault();
-              const droppedFile = e.dataTransfer.files[0];
-              setFile(droppedFile);
-              setPreview(URL.createObjectURL(droppedFile));
-            }}
+            onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
             style={{ height: "200px" }}
           >
@@ -296,14 +291,55 @@ export default function Detect() {
                 type="file"
                 id="file-upload"
                 className="hidden"
-                onChange={(e) => {
-                  const selectedFile = e.target.files[0];
-                  setFile(selectedFile);
-                  setPreview(URL.createObjectURL(selectedFile));
-                }}
+                onChange={handleFileChange}
               />
             </div>
           </div>
+
+          {file && (
+            <div className="mt-6 text-center">
+              <p className="text-gray-600">File: {file.name}</p>
+              {/* Image Preview */}
+              {preview && (
+                <img
+                  src={preview}
+                  alt="Uploaded Preview"
+                  className="mt-4 mx-auto max-h-48 rounded shadow"
+                />
+              )}
+            </div>
+          )}
+
+          {/* Result or processing state */}
+          {isProcessing && (
+            <div className="mt-6 text-center text-gray-600">Processing...</div>
+          )}
+
+          {result && (
+            <div className="mt-6 text-center text-gray-600">
+              <h3 className="text-lg font-bold">Detection Results:</h3>
+
+              {/* Find the AI percentage (assuming 'artificial' is the label for AI content) */}
+              {result.map((item, index) => {
+                if (item.label === "artificial") {
+                  const aiPercentage = item.score * 100;
+
+                  // Determine AI or Human based on percentage
+                  const label = aiPercentage > 60 ? "AI Generated" : "Human";
+
+                  return (
+                    <div key={index} className="mt-4">
+                      <p className="text-lg font-semibold text-blue-500">{label}</p>
+                      <p className="text-sm text-gray-600">
+                        AI Percentage: {aiPercentage.toFixed(2)}%
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              })}
+            </div>
+          )}
 
           {/* Text Input Section */}
           <div className="mt-8">
