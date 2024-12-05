@@ -25,6 +25,19 @@ export default function HomePage() {
     } else {
       document.documentElement.classList.remove("dark");
     }
+
+    // Load Dialogflow chatbot script only if not already present
+    if (!document.querySelector('script[src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"]')) {
+      const script = document.createElement('script');
+      script.src = "https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1";
+      script.async = true;
+      document.body.appendChild(script);
+
+      // Cleanup: Remove the script when component is unmounted
+      return () => {
+        document.body.removeChild(script);
+      };
+    }
   }, [router, isDarkMode]); // Include isDarkMode in the dependency array
 
   const handleProfileLinkClick = () => setShowProfileModal(true);
@@ -175,6 +188,16 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* Chatbot Integration */}
+      <div className="mt-10 w-full flex justify-center">
+        <df-messenger
+          intent="WELCOME"
+          chat-title="Fork"
+          agent-id="968b0cec-78e6-45a9-86fc-b36ca1d57549"
+          language-code="en"
+        ></df-messenger>
+      </div>
     </div>
   );
 }
