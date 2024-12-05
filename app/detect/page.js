@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // For navigation
 import axios from "axios";
 import Link from "next/link"; // Use Link for navigation between pages
@@ -37,8 +37,7 @@ export default function Detect() {
   };
 
   // Handle form submission (if needed for further processing)
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (file) => {
     if (!file) {
       setError("Please upload a file to detect.");
       return;
@@ -86,6 +85,13 @@ export default function Detect() {
       setIsProcessing(false);
     }
   };
+
+  // Automatically call handleSubmit whenever the file state changes (user uploads a file)
+  useEffect(() => {
+    if (file) {
+      handleSubmit(file);
+    }
+  }, [file]);
 
   return (
     <div>
@@ -164,25 +170,28 @@ export default function Detect() {
           {result && (
             <div className="mt-6 text-center text-gray-600">
               <h3 className="text-lg font-bold">Detection Results:</h3>
-              <ul className="mt-4">
-                {result.map((item, index) => (
-                  <li key={index} className="mt-2">
-                    <span className="font-semibold">{item.label}</span>:{" "}
-                    <span>{(item.score * 100).toFixed(2)}%</span>
-                  </li>
-                ))}
-              </ul>
+
+              {/* Find the AI percentage (assuming 'artificial' is the label for AI content) */}
+              {result.map((item, index) => {
+                if (item.label === "artificial") {
+                  const aiPercentage = item.score * 100;
+
+                  // Determine AI or Human based on percentage
+                  const label = aiPercentage > 60 ? "AI Generated" : "Human";
+
+                  return (
+                    <div key={index} className="mt-4">
+                      <p className="text-lg font-semibold text-blue-500">{label}</p>
+                      <p className="text-sm text-gray-600">
+                        AI Percentage: {aiPercentage.toFixed(2)}%
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              })}
             </div>
           )}
-
-          <div className="mt-8 text-center">
-            <button
-              onClick={handleSubmit}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none"
-            >
-              Detect Content
-            </button>
-          </div>
         </div>
       </div>
     </div>
