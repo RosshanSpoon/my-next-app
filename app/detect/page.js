@@ -29,6 +29,10 @@ export default function Detect() {
     }
   };
 
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => !prev);
+  };
+
   // Handle file selection via file input
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -87,6 +91,22 @@ export default function Detect() {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // Toggle mobile menu
+  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
+ 
+  // Open the modal
+  const openModal = () => setIsModalOpen(true);
+ 
+  // Close the modal
+  const closeModal = () => setIsModalOpen(false);
+ 
+  // Handle log out
+  const handleLogOut = () => {
+    console.log("User logged out");
+    setIsModalOpen(false);
+    router.push("/login"); // Redirect to login page
   };
 
   // Automatically call handleSubmit whenever the file state changes (user uploads a file)

@@ -7,10 +7,13 @@ import Link from "next/link";
 export default function Learn() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Dark mode state
   const [selectedOption, setSelectedOption] = useState(null);
   const [quizAnswers, setQuizAnswers] = useState({});
   const [showResult, setShowResult] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile menu state
   const router = useRouter();
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state for Profile
 
   useEffect(() => {
     const loggedIn = localStorage.getItem("isLoggedIn") === "true";
@@ -19,7 +22,36 @@ export default function Learn() {
     } else {
       setIsAuthenticated(true);
     }
-  }, [router]);
+ 
+    // Apply dark mode classes to the HTML element
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [router, isDarkMode]); // Include isDarkMode in the dependency array
+ 
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => !prev);
+  };
+ 
+  // Toggle mobile menu
+  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
+ 
+  // Open the profile modal
+  const openModal = () => setIsModalOpen(true);
+ 
+  // Close the modal
+  const closeModal = () => setIsModalOpen(false);
+ 
+  // Handle log out
+  const handleLogOut = () => {
+    // Add any logout logic here (e.g., clearing user data, redirecting, etc.)
+    console.log("User logged out");
+    setIsModalOpen(false);
+    router.push("/login"); // Redirect to login page
+  };
 
   // Questions and correct answers for the quiz
   const questions = [
@@ -100,6 +132,8 @@ export default function Learn() {
     }
   };
 
+  
+
   if (!isAuthenticated) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -107,6 +141,7 @@ export default function Learn() {
       </div>
     );
   }
+  
 
   return (
     <div className={`${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-800"} min-h-screen`}>
