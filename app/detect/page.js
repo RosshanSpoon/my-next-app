@@ -1,30 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation"; // For navigation
+import axios from "axios";
+import Link from "next/link"; // Use Link for navigation between pages
 
 export default function Detect() {
   const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(""); // For image preview
   const [error, setError] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
   const router = useRouter();
-
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
-  };
-
-  // Apply dark mode classes to the HTML element
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [isDarkMode]);
+  const [isProcessing, setIsProcessing] = useState(false); // To show loading state
+  const [result, setResult] = useState(null); // To store API response
 
   // Handle file drop
   const handleDrop = (e) => {
@@ -34,7 +24,8 @@ export default function Detect() {
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       setFile(droppedFile);
-      setError("");
+      setPreview(URL.createObjectURL(droppedFile)); // Set the preview URL
+      setError(""); // Clear any previous errors
     }
   };
 
@@ -43,18 +34,60 @@ export default function Detect() {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       setFile(selectedFile);
-      setError("");
+      setPreview(URL.createObjectURL(selectedFile)); // Set the preview URL
+      setError(""); // Clear any previous errors
     }
   };
 
-  // Handle form submission
-  const handleSubmit = (e) => {
+  // Handle form submission (if needed for further processing)
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file) {
       setError("Please upload a file to detect.");
       return;
     }
-    console.log("File uploaded:", file);
+
+    console.log("File uploaded:", file); // Log uploaded file
+
+    setIsProcessing(true);
+    setError(""); // Clear previous errors
+    setResult(null); // Reset result
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      console.log("Sending request to Hugging Face API...");
+
+      const fileBytes = await file.arrayBuffer();
+      const base64EncodedImage = btoa(
+        new Uint8Array(fileBytes).reduce(
+          (data, byte) => data + String.fromCharCode(byte),
+          ""
+        )
+      );
+
+      const response = await axios.post(
+        "https://api-inference.huggingface.co/models/umm-maybe/AI-image-detector/", // Replace with the actual model URL
+        { inputs: base64EncodedImage }, // Model expects image in this format
+        {
+          headers: {
+            "Authorization": `Bearer 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`, // Replace with your Hugging Face API key
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // Log the full response to check its structure
+      console.log("Response from Hugging Face:", response.data);
+
+      setResult(response.data); // Store the result in state
+    } catch (err) {
+      console.error("Error in request:", err);
+      setError("Error detecting AI content. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Toggle mobile menu
@@ -75,96 +108,96 @@ export default function Detect() {
 
   return (
     <div className={`${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-800"} min-h-screen`}>
-      {/* Navigation Bar */}
-      <nav className="bg-gray-800 dark:bg-gray-900 p-4">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="text-white text-xl font-bold">Fork</div>
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link href="/" className="text-white hover:text-gray-300">
-              Home
-            </Link>
-            {/* Profile Link */}
-            <button onClick={openModal} className="text-white hover:text-gray-300">
-              Profile
-            </button>
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={toggleDarkMode}
-              className="text-white hover:text-gray-300"
-              aria-label="Toggle Dark Mode"
-            >
-              {isDarkMode ? "Light Mode" : "Dark Mode"}
-            </button>
-          </div>
-          {/* Mobile Menu Toggle */}
-          <button className="md:hidden text-white" onClick={toggleMobileMenu}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              fill="none"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"
-              />
-            </svg>
+    {/* Navigation Bar */}
+    <nav className="bg-gray-800 dark:bg-gray-900 p-4">
+      <div className="flex items-center justify-between max-w-7xl mx-auto">
+        <div className="text-white text-xl font-bold">Fork</div>
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-6">
+          <Link href="/" className="text-white hover:text-gray-300">
+            Home
+          </Link>
+          {/* Profile Link */}
+          <button onClick={openModal} className="text-white hover:text-gray-300">
+            Profile
+          </button>
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={toggleDarkMode}
+            className="text-white hover:text-gray-300"
+            aria-label="Toggle Dark Mode"
+          >
+            {isDarkMode ? "Light Mode" : "Dark Mode"}
           </button>
         </div>
+        {/* Mobile Menu Toggle */}
+        <button className="md:hidden text-white" onClick={toggleMobileMenu}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            strokeWidth="1.5"
+            stroke="currentColor"
+            fill="none"
+            className="w-6 h-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"
+            />
+          </svg>
+        </button>
+      </div>
 
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden flex flex-col items-start bg-gray-700 text-white space-y-4 px-4 py-2">
-            <Link href="/" className="text-white hover:text-gray-300" onClick={toggleMobileMenu}>
-              Home
-            </Link>
-            {/* Profile Link in Mobile Menu */}
-            <button onClick={openModal} className="text-white hover:text-gray-300 text-left">
-              Profile
-            </button>
-            {/* Dark Mode Toggle in Mobile */}
-            <button
-              onClick={toggleDarkMode}
-              className="text-white hover:text-gray-300 text-left"
-              aria-label="Toggle Dark Mode"
-            >
-              {isDarkMode ? "Light Mode" : "Dark Mode"}
-            </button>
-          </div>
-        )}
-      </nav>
+      {/* Mobile Navigation */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden flex flex-col items-start bg-gray-700 text-white space-y-4 px-4 py-2">
+          <Link href="/" className="text-white hover:text-gray-300" onClick={toggleMobileMenu}>
+            Home
+          </Link>
+          {/* Profile Link in Mobile Menu */}
+          <button onClick={openModal} className="text-white hover:text-gray-300 text-left">
+            Profile
+          </button>
+          {/* Dark Mode Toggle in Mobile */}
+          <button
+            onClick={toggleDarkMode}
+            className="text-white hover:text-gray-300 text-left"
+            aria-label="Toggle Dark Mode"
+          >
+            {isDarkMode ? "Light Mode" : "Dark Mode"}
+          </button>
+        </div>
+      )}
+    </nav>
 
-      {/* Profile Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-96">
-            <h2 className="text-2xl font-bold text-center">Profile</h2>
-            <div className="mt-4">
-              <p className="text-gray-800 dark:text-gray-300">User information goes here.</p>
-              <div className="mt-6 text-center">
-                <button
-                  onClick={handleLogOut}
-                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none"
-                >
-                  Log Out
-                </button>
-              </div>
-            </div>
-            <div className="mt-4 text-center">
+    {/* Profile Modal */}
+    {isModalOpen && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-96">
+          <h2 className="text-2xl font-bold text-center">Profile</h2>
+          <div className="mt-4">
+            <p className="text-gray-800 dark:text-gray-300">User information goes here.</p>
+            <div className="mt-6 text-center">
               <button
-                onClick={closeModal}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                onClick={handleLogOut}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none"
               >
-                Close
+                Log Out
               </button>
             </div>
           </div>
+          <div className="mt-4 text-center">
+            <button
+              onClick={closeModal}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              Close
+            </button>
+          </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Main Content */}
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 px-4">
@@ -203,7 +236,34 @@ export default function Detect() {
 
           {file && (
             <div className="mt-6 text-center">
-              <p className="text-gray-600 dark:text-gray-300">File: {file.name}</p>
+              <p className="text-gray-600">File: {file.name}</p>
+              {/* Image Preview */}
+              {preview && (
+                <img
+                  src={preview}
+                  alt="Uploaded Preview"
+                  className="mt-4 mx-auto max-h-48 rounded shadow"
+                />
+              )}
+            </div>
+          )}
+
+          {/* Result or processing state */}
+          {isProcessing && (
+            <div className="mt-6 text-center text-gray-600">Processing...</div>
+          )}
+
+          {result && (
+            <div className="mt-6 text-center text-gray-600">
+              <h3 className="text-lg font-bold">Detection Results:</h3>
+              <ul className="mt-4">
+                {result.map((item, index) => (
+                  <li key={index} className="mt-2">
+                    <span className="font-semibold">{item.label}</span>:{" "}
+                    <span>{(item.score * 100).toFixed(2)}%</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
