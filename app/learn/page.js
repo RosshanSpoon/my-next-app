@@ -55,6 +55,7 @@ export default function Learn() {
 
   // Questions and correct answers for the quiz
   const questions = [
+    // Existing phishing questions
     {
       id: 1,
       question: "What is phishing?",
@@ -66,79 +67,166 @@ export default function Learn() {
       ],
       correctAnswer: 1,
     },
+    // Add 3 new phishing questions here:
     {
-      id: 2,
-      question: "Which of the following is a common sign of a phishing email?",
+      id: 6,
+      question:
+        "Which of the following is a sign that an email might be a phishing attempt?",
       options: [
-        "Personalized greetings and accurate details",
-        "An urgent call to action, such as 'Reset your password now!'",
-        "Emails from known contacts only",
-        "Professional grammar and spelling",
+        "The sender's email address is from a known organization",
+        "The email contains suspicious links or attachments",
+        "The email is addressed to you personally",
+        "The email has your name and other correct details",
       ],
       correctAnswer: 1,
     },
     {
-      id: 3,
-      question: "What is sniffing in the context of cybersecurity?",
+      id: 7,
+      question:
+        "What should you do if you receive a suspicious email asking for personal information?",
       options: [
-        "Tracking user activities on social media",
-        "Intercepting and analyzing data packets on a network",
-        "Sending unsolicited promotional messages",
-        "Encrypting sensitive data for security",
-      ],
-      correctAnswer: 1,
-    },
-    {
-      id: 4,
-      question: "How can you protect yourself from phishing attacks?",
-      options: [
-        "Click on every link to verify its authenticity",
-        "Avoid installing antivirus software",
-        "Verify the sender's email address and avoid clicking on suspicious links",
-        "Use public Wi-Fi for sensitive activities",
+        "Ignore it and do nothing",
+        "Click on the links to verify the information",
+        "Report it to your IT department or email provider",
+        "Reply with the requested information",
       ],
       correctAnswer: 2,
     },
     {
-      id: 5,
-      question:
-        "What should you do if you suspect you've fallen victim to phishing?",
+      id: 8,
+      question: "What is spear phishing?",
       options: [
-        "Ignore the situation and hope for the best",
-        "Change your passwords immediately and report the incident",
-        "Share the phishing email with friends",
-        "Uninstall your antivirus software",
+        "A type of phishing that targets a large number of people at once",
+        "A phishing attempt that uses publicly available information to target a specific individual",
+        "Phishing that targets organizations through their websites",
+        "A method to deliver malicious software to a wide audience",
       ],
       correctAnswer: 1,
     },
+    // Existing deepfake questions
+    {
+      id: 9,
+      question: "What is a deepfake?",
+      options: [
+        "A technique used to make videos and audio more realistic",
+        "A type of machine learning algorithm used to create fake media",
+        "A new type of software that records audio automatically",
+        "A form of encryption for videos and audio",
+      ],
+      correctAnswer: 1,
+    },
+    // Add 7 new deepfake questions here:
+    {
+      id: 10,
+      question:
+        "Which of the following is a potential use of deepfake technology?",
+      options: [
+        "Creating false news reports",
+        "Enhancing the quality of legitimate videos",
+        "Encrypting video content",
+        "Improving video compression algorithms",
+      ],
+      correctAnswer: 0,
+    },
+    {
+      id: 11,
+      question: "How can deepfake videos be harmful?",
+      options: [
+        "They can manipulate public opinion and spread misinformation",
+        "They make videos more entertaining",
+        "They help improve video editing software",
+        "They allow celebrities to create new content",
+      ],
+      correctAnswer: 0,
+    },
+    {
+      id: 12,
+      question: "Which technology is used to create deepfakes?",
+      options: [
+        "Face recognition software",
+        "Generative Adversarial Networks (GANs)",
+        "Holographic imaging",
+        "Quantum computing",
+      ],
+      correctAnswer: 1,
+    },
+    {
+      id: 13,
+      question: "What is one way to detect deepfake videos?",
+      options: [
+        "Checking for inconsistencies in facial expressions or lighting",
+        "Listening for unusual background noise",
+        "Watching videos in high resolution only",
+        "Making sure the video is from a verified source",
+      ],
+      correctAnswer: 0,
+    },
+    {
+      id: 14,
+      question: "Why are deepfakes particularly dangerous in politics?",
+      options: [
+        "They can create fake speeches or actions from politicians, influencing elections",
+        "They make political debates more entertaining",
+        "They provide truthful information",
+        "They allow politicians to communicate directly with voters",
+      ],
+      correctAnswer: 0,
+    },
+    {
+      id: 15,
+      question:
+        "What can individuals do to protect themselves from deepfake content?",
+      options: [
+        "Verify the source of videos and check for inconsistencies",
+        "Always trust videos from popular social media platforms",
+        "Only watch videos on trusted websites",
+        "Avoid watching videos altogether",
+      ],
+      correctAnswer: 0,
+    },
   ];
 
-  // Handle selecting an option in the quiz
   const handleOptionClick = (optionIndex) => {
-    setSelectedOption(optionIndex);
+    if (selectedOption === null) {
+      // Only allow selection if no option has been chosen
+      setSelectedOption(optionIndex);
 
-    // Store whether the answer is correct or not
-    const isCorrect =
-      optionIndex === questions[currentQuestionIndex].correctAnswer;
-    setQuizAnswers((prev) => ({
-      ...prev,
-      [questions[currentQuestionIndex].id]: isCorrect,
-    }));
+      // Store whether the answer is correct or not
+      const isCorrect =
+        optionIndex === questions[currentQuestionIndex].correctAnswer;
+      setQuizAnswers((prev) => ({
+        ...prev,
+        [questions[currentQuestionIndex].id]: isCorrect,
+      }));
+    }
   };
 
   const handleNextClick = () => {
+    // Check if there are more questions
     if (currentQuestionIndex < questions.length - 1) {
+      // Move to the next question
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setSelectedOption(null); // Reset for the next question
+      setSelectedOption(null); // Reset selected option for the next question
+      setShowResult(false); // Hide the result until the user selects an answer
     } else {
-      setShowResult(true); // Show result after the last question
+      // Show final results after the last question
+      setShowResult(true);
     }
+  };
+
+  // Function to reset the quiz
+  const handleRetakeQuiz = () => {
+    setCurrentQuestionIndex(0); // Go back to the first question
+    setSelectedOption(null); // Reset the selected option
+    setQuizAnswers({}); // Reset the quiz answers
+    setShowResult(false); // Hide the result
   };
 
   // Video URLs for the carousel
   const videos = [
     "https://www.youtube.com/embed/gSQgbCo6PAg",
     "https://www.youtube.com/embed/WFc6t-c892A",
+    "https://www.youtube.com/embed/Twy6T_OHWeM",
   ];
 
   // Change the video in the carousel
@@ -266,7 +354,7 @@ export default function Learn() {
             </div>
             <div className="mt-4 text-center">
               <button
-                className="text-gray-600 hover:text-gray-800"
+                className="text-gray-700 hover:text-gray-900"
                 onClick={closeModal}
               >
                 Close
@@ -276,96 +364,117 @@ export default function Learn() {
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="flex flex-col items-center justify-center mt-10 space-y-8">
-        <h1 className="text-3xl font-bold">Learn How to Protect Yourself!</h1>
+      {/* Content Section */}
+      <div className="max-w-7xl mx-auto px-4 py-10">
+        <div className="flex flex-wrap justify-center gap-10 mt-10">
+          {/* Video Carousel Card */}
+          <div className="w-full sm:w-3/4 lg:w-2/5 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold mb-4 text-center text-gray-900 dark:text-white">
+              Watch these Videos
+            </h2>
+            <div className="relative">
+              {/* Previous Button */}
+              <button
+                onClick={goToPrevVideo}
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full dark:bg-gray-400 dark:text-black"
+              >
+                &lt;
+              </button>
 
-        {/* Video Carousel */}
-        <div className="w-full max-w-2xl bg-white p-8 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4 text-center">
-            Watch these Videos
-          </h2>
-          <div className="relative">
-            {/* Previous Button */}
-            <button
-              onClick={goToPrevVideo}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full"
-            >
-              &lt;
-            </button>
+              {/* Video Embed */}
+              <div
+                className="w-full max-w-[800px] mx-auto"
+                style={{ height: "400px" }}
+              >
+                <iframe
+                  src={`${videos[currentVideoIndex]}?rel=0&controls=0`}
+                  title="YouTube video player"
+                  allow="accelerometer; autoPlay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                ></iframe>
+              </div>
 
-            {/* Video Embed */}
-            <div
-              className="w-full max-w-[800px] mx-auto"
-              style={{ height: "500px" }}
-            >
-              <iframe
-                src={`${videos[currentVideoIndex]}?rel=0&controls=0`}
-                title="YouTube video player"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full"
-              ></iframe>
+              {/* Next Button */}
+              <button
+                onClick={goToNextVideo}
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full dark:bg-gray-400 dark:text-black"
+              >
+                &gt;
+              </button>
             </div>
-
-            {/* Next Button */}
-            <button
-              onClick={goToNextVideo}
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full"
-            >
-              &gt;
-            </button>
           </div>
-        </div>
 
-        {/* Quiz Section */}
-        <div className="w-full max-w-2xl bg-white p-8 rounded-lg shadow-md mt-10">
-          <h2 className="text-xl font-semibold mb-4 text-center">
-            Test Your Knowledge!
-          </h2>
+          {/* Quiz Card */}
+          <div className="w-full sm:w-3/4 lg:w-2/5 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mt-10 sm:mt-0">
+            <h2 className="text-xl font-semibold mb-4 text-center text-gray-900 dark:text-white">
+              Test Your Knowledge!
+            </h2>
 
-          {!showResult ? (
-            <>
-              <div className="mb-6">
-                <h3 className="text-lg font-medium">
-                  {questions[currentQuestionIndex].question}
+            {showResult ? (
+              <div className="text-center">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Your Results
                 </h3>
-                <div className="space-y-3 mt-4">
-                  {questions[currentQuestionIndex].options.map(
-                    (option, index) => (
-                      <button
-                        key={index}
-                        className={`w-full text-left p-3 rounded-lg border ${
-                          selectedOption === index
-                            ? "bg-blue-500 text-white"
-                            : "bg-white"
-                        }`}
-                        onClick={() => handleOptionClick(index)}
-                      >
-                        {option}
-                      </button>
-                    )
-                  )}
+                <p className="mt-4 text-gray-700 dark:text-gray-300">
+                  You got {Object.values(quizAnswers).filter(Boolean).length}{" "}
+                  out of {questions.length} correct!
+                </p>
+                <div className="mt-6">
+                  <button
+                    className="bg-blue-500 text-white px-4 py-2 rounded-lg"
+                    onClick={handleRetakeQuiz} // Retake the quiz
+                  >
+                    Retake Quiz
+                  </button>
                 </div>
               </div>
-              <div className="text-center">
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg"
-                  onClick={handleNextClick}
-                >
-                  Next
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="text-center">
-              <h3 className="text-xl font-semibold">Your Results</h3>
-              <p className="mt-4">
-                You got {Object.values(quizAnswers).filter(Boolean).length} out
-                of {questions.length} correct!
-              </p>
-            </div>
-          )}
+            ) : (
+              <>
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    {questions[currentQuestionIndex].question}
+                  </h3>
+                  <div className="space-y-3 mt-4">
+                    {questions[currentQuestionIndex].options.map(
+                      (option, index) => {
+                        const isCorrect =
+                          index ===
+                          questions[currentQuestionIndex].correctAnswer;
+                        const isSelected = selectedOption === index;
+
+                        // Option style based on whether it's selected or correct
+                        const optionStyle = isSelected
+                          ? isCorrect
+                            ? "bg-green-500 text-white" // Correct answer selected
+                            : "bg-red-500 text-white" // Incorrect answer selected
+                          : "bg-white dark:bg-gray-700"; // Default background for unselected options
+
+                        return (
+                          <button
+                            key={index}
+                            className={`w-full text-left p-3 rounded-lg border ${optionStyle} dark:border-gray-600`}
+                            onClick={() => handleOptionClick(index)}
+                            disabled={selectedOption !== null} // Disable options after one is selected
+                          >
+                            {option}
+                          </button>
+                        );
+                      }
+                    )}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <button
+                    className="bg-blue-500 text-white px-4 py-2 rounded-lg"
+                    onClick={handleNextClick}
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
