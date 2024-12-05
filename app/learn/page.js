@@ -12,8 +12,9 @@ export default function Learn() {
   const [quizAnswers, setQuizAnswers] = useState({});
   const [showResult, setShowResult] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile menu state
-  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal state for Profile
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0); // Track the current video in the carousel
+  const router = useRouter();
 
   useEffect(() => {
     const loggedIn = localStorage.getItem("isLoggedIn") === "true";
@@ -22,7 +23,7 @@ export default function Learn() {
     } else {
       setIsAuthenticated(true);
     }
- 
+
     // Apply dark mode classes to the HTML element
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
@@ -30,24 +31,23 @@ export default function Learn() {
       document.documentElement.classList.remove("dark");
     }
   }, [router, isDarkMode]); // Include isDarkMode in the dependency array
- 
+
   // Toggle dark mode
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev);
   };
- 
+
   // Toggle mobile menu
   const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
- 
+
   // Open the profile modal
   const openModal = () => setIsModalOpen(true);
- 
+
   // Close the modal
   const closeModal = () => setIsModalOpen(false);
- 
+
   // Handle log out
   const handleLogOut = () => {
-    // Add any logout logic here (e.g., clearing user data, redirecting, etc.)
     console.log("User logged out");
     setIsModalOpen(false);
     router.push("/login"); // Redirect to login page
@@ -101,7 +101,8 @@ export default function Learn() {
     },
     {
       id: 5,
-      question: "What should you do if you suspect you've fallen victim to phishing?",
+      question:
+        "What should you do if you suspect you've fallen victim to phishing?",
       options: [
         "Ignore the situation and hope for the best",
         "Change your passwords immediately and report the incident",
@@ -112,11 +113,13 @@ export default function Learn() {
     },
   ];
 
+  // Handle selecting an option in the quiz
   const handleOptionClick = (optionIndex) => {
     setSelectedOption(optionIndex);
 
     // Store whether the answer is correct or not
-    const isCorrect = optionIndex === questions[currentQuestionIndex].correctAnswer;
+    const isCorrect =
+      optionIndex === questions[currentQuestionIndex].correctAnswer;
     setQuizAnswers((prev) => ({
       ...prev,
       [questions[currentQuestionIndex].id]: isCorrect,
@@ -132,32 +135,55 @@ export default function Learn() {
     }
   };
 
-  
+  // Video URLs for the carousel
+  const videos = [
+    "https://www.youtube.com/embed/gSQgbCo6PAg",
+    "https://www.youtube.com/embed/WFc6t-c892A",
+  ];
+
+  // Change the video in the carousel
+  const goToNextVideo = () => {
+    setCurrentVideoIndex((prevIndex) =>
+      prevIndex === videos.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const goToPrevVideo = () => {
+    setCurrentVideoIndex((prevIndex) =>
+      prevIndex === 0 ? videos.length - 1 : prevIndex - 1
+    );
+  };
 
   if (!isAuthenticated) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <p>Loading...</p> {/* Placeholder while checking authentication */}
+        <p>Loading...</p>
       </div>
     );
   }
-  
 
   return (
-    <div className={`${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-800"} min-h-screen`}>
+    <div
+      className={`${
+        isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-800"
+      } min-h-screen`}
+    >
       {/* Navigation Bar */}
       <nav className="bg-gray-800 dark:bg-gray-900 p-4">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="text-white text-xl font-bold">Fork</div>
-          
+
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link href="/" className="text-white hover:text-gray-300">Home</Link>
-            {/* Profile Link */}
-            <button onClick={openModal} className="text-white hover:text-gray-300">
+            <Link href="/" className="text-white hover:text-gray-300">
+              Home
+            </Link>
+            <button
+              onClick={openModal}
+              className="text-white hover:text-gray-300"
+            >
               Profile
             </button>
-            {/* Dark Mode Toggle */}
             <button
               onClick={toggleDarkMode}
               className="text-white hover:text-gray-300"
@@ -189,12 +215,19 @@ export default function Learn() {
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <div className="md:hidden flex flex-col items-start bg-gray-700 text-white space-y-4 px-4 py-2">
-            <Link href="/" className="text-white hover:text-gray-300" onClick={toggleMobileMenu}>Home</Link>
-            {/* Profile Link in Mobile Menu */}
-            <button onClick={openModal} className="text-white hover:text-gray-300 text-left">
+            <Link
+              href="/"
+              className="text-white hover:text-gray-300"
+              onClick={toggleMobileMenu}
+            >
+              Home
+            </Link>
+            <button
+              onClick={openModal}
+              className="text-white hover:text-gray-300 text-left"
+            >
               Profile
             </button>
-            {/* Dark Mode Toggle in Mobile */}
             <button
               onClick={toggleDarkMode}
               className="text-white hover:text-gray-300 text-left"
@@ -208,14 +241,21 @@ export default function Learn() {
 
       {/* Modal for Profile */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50" onClick={closeModal}>
+        <div
+          className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50"
+          onClick={closeModal}
+        >
           <div
             className="bg-white p-6 rounded-lg shadow-md w-80"
             onClick={(e) => e.stopPropagation()} // Prevent the modal from closing when clicked inside
           >
-            <h2 className="text-xl font-bold text-gray-800 mb-4">User Profile</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              User Profile
+            </h2>
             <p className="text-gray-700">Welcome to your profile page!</p>
-            <p className="text-gray-600 mt-4">Here you can view and update your profile.</p>
+            <p className="text-gray-600 mt-4">
+              Here you can view and update your profile.
+            </p>
             <div className="mt-6 text-center">
               <button
                 className="text-white bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg"
@@ -240,57 +280,90 @@ export default function Learn() {
       <div className="flex flex-col items-center justify-center mt-10 space-y-8">
         <h1 className="text-3xl font-bold">Learn How to Protect Yourself!</h1>
 
-        {/* Quiz Section */}
+        {/* Video Carousel */}
         <div className="w-full max-w-2xl bg-white p-8 rounded-lg shadow-md">
-          {showResult ? (
-            <div>
-              <h2 className="text-2xl font-bold text-center">Quiz Results</h2>
-              <p className="text-center mt-4 text-gray-600">
-                You scored{" "}
-                {Object.values(quizAnswers).filter(Boolean).length} out of{" "}
-                {questions.length}.
-              </p>
-              <p className="text-center text-gray-500 mt-2">
-                Review the material and try again if needed!
-              </p>
+          <h2 className="text-xl font-semibold mb-4 text-center">
+            Watch these Videos
+          </h2>
+          <div className="relative">
+            {/* Previous Button */}
+            <button
+              onClick={goToPrevVideo}
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full"
+            >
+              &lt;
+            </button>
+
+            {/* Video Embed */}
+            <div
+              className="w-full max-w-[800px] mx-auto"
+              style={{ height: "500px" }}
+            >
+              <iframe
+                src={`${videos[currentVideoIndex]}?rel=0&controls=0`}
+                title="YouTube video player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
+              ></iframe>
             </div>
-          ) : (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">
-                Question {currentQuestionIndex + 1} of {questions.length}
-              </h2>
-              <p className="text-lg font-bold mb-6">
-                {questions[currentQuestionIndex].question}
-              </p>
-              <div className="space-y-4">
-                {questions[currentQuestionIndex].options.map((option, index) => (
-                  <div
-                    key={index}
-                    onClick={() => handleOptionClick(index)}
-                    className={`cursor-pointer p-4 border rounded-lg ${
-                      selectedOption !== null
-                        ? index === questions[currentQuestionIndex].correctAnswer
-                          ? "bg-green-500 text-white"
-                          : index === selectedOption
-                          ? "bg-red-500 text-white"
-                          : "bg-gray-100"
-                        : "bg-gray-100"
-                    }`}
-                  >
-                    {option}
-                  </div>
-                ))}
+
+            {/* Next Button */}
+            <button
+              onClick={goToNextVideo}
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full"
+            >
+              &gt;
+            </button>
+          </div>
+        </div>
+
+        {/* Quiz Section */}
+        <div className="w-full max-w-2xl bg-white p-8 rounded-lg shadow-md mt-10">
+          <h2 className="text-xl font-semibold mb-4 text-center">
+            Test Your Knowledge!
+          </h2>
+
+          {!showResult ? (
+            <>
+              <div className="mb-6">
+                <h3 className="text-lg font-medium">
+                  {questions[currentQuestionIndex].question}
+                </h3>
+                <div className="space-y-3 mt-4">
+                  {questions[currentQuestionIndex].options.map(
+                    (option, index) => (
+                      <button
+                        key={index}
+                        className={`w-full text-left p-3 rounded-lg border ${
+                          selectedOption === index
+                            ? "bg-blue-500 text-white"
+                            : "bg-white"
+                        }`}
+                        onClick={() => handleOptionClick(index)}
+                      >
+                        {option}
+                      </button>
+                    )
+                  )}
+                </div>
               </div>
-              {selectedOption !== null && (
+              <div className="text-center">
                 <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg"
                   onClick={handleNextClick}
-                  className="mt-6 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                 >
-                  {currentQuestionIndex === questions.length - 1
-                    ? "View Results"
-                    : "Next Question"}
+                  Next
                 </button>
-              )}
+              </div>
+            </>
+          ) : (
+            <div className="text-center">
+              <h3 className="text-xl font-semibold">Your Results</h3>
+              <p className="mt-4">
+                You got {Object.values(quizAnswers).filter(Boolean).length} out
+                of {questions.length} correct!
+              </p>
             </div>
           )}
         </div>
