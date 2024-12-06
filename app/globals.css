@@ -6,6 +6,10 @@
 
 
 
+.nextjs-toast-errors-parent {
+  display: none;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
