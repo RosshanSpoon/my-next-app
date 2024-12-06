@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  GoogleGenerativeAI,
+  HarmCategory,
+  HarmBlockThreshold,
+} from "@google/generative-ai";
 
 export default function Learn() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -14,7 +19,16 @@ export default function Learn() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile menu state
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal state for Profile
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0); // Track the current video in the carousel
+  const [modelEmail, setModelEmail] = useState(""); // Store phishing email content
+  const [aiResponse, setAiResponse] = useState(""); // Store AI response
+  const [isResponseModalOpen, setIsResponseModalOpen] = useState(false); // Modal for AI response
+  const [isEmailReloading, setIsEmailReloading] = useState(false); // Reload email content
+  const [loading, setLoading] = useState(true); // Loading state
   const router = useRouter();
+  // Replace these with your actual values
+  const MODEL_NAME = "gemini-1.0-pro";
+  const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY; // API key stored in .env.local
+  const PHISHING_PROMPT = process.env.NEXT_PUBLIC_PHISHING_PROMPT; // Prompt stored in .env.local
 
   useEffect(() => {
     const loggedIn = localStorage.getItem("isLoggedIn") === "true";
@@ -31,6 +45,114 @@ export default function Learn() {
       document.documentElement.classList.remove("dark");
     }
   }, [router, isDarkMode]); // Include isDarkMode in the dependency array
+
+  // Gemini
+  useEffect(() => {
+    // Function to call the Gemini API
+    async function fetchPhishingEmail() {
+      try {
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+
+        // Model configuration
+        const generationConfig = {
+          temperature: 0.9,
+          topK: 1,
+          topP: 1,
+          maxOutputTokens: 2048,
+        };
+
+        // Safety settings
+        const safetySettings = [
+          {
+            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+            threshold: HarmBlockThreshold.BLOCK_LOW,
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold: HarmBlockThreshold.BLOCK_LOW,
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold: HarmBlockThreshold.BLOCK_LOW,
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+          },
+        ];
+
+        // Set up chat
+        const chat = model.startChat({
+          generationConfig,
+          safetySettings,
+        });
+
+        // Send the phishing prompt
+        const result = await chat.sendMessage(PHISHING_PROMPT);
+        const response = result.response;
+        setModelEmail(response.text()); // Update state with the result
+      } catch (error) {
+        console.error("Error fetching phishing email:", error);
+        setModelEmail("Failed to load email content. Please try again later.");
+      } finally {
+        setLoading(false); // Set loading to false once complete
+      }
+    }
+
+    fetchPhishingEmail(); // Fetch email on load
+  }, [API_KEY, PHISHING_PROMPT, isEmailReloading]);
+
+  async function handleButtonClick(prompt) {
+    setLoading(true);
+    try {
+      const genAI = new GoogleGenerativeAI(API_KEY);
+      const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+
+      const generationConfig = {
+        temperature: 0.9,
+        topK: 1,
+        topP: 1,
+        maxOutputTokens: 2048,
+      };
+
+      const chat = model.startChat({
+        generationConfig,
+      });
+
+      const result = await chat.sendMessage(prompt);
+      setAiResponse(result.response.text());
+      setIsResponseModalOpen(true); // Open response modal
+    } catch (error) {
+      console.error("Error prompting AI:", error);
+      setAiResponse("Failed to generate response. Please try again later.");
+      setIsResponseModalOpen(true); // Open response modal for error
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Close the AI response modal and reload the email modal
+  function handleModalClose() {
+    setIsResponseModalOpen(false);
+    setIsEmailReloading((prev) => !prev); // Toggle state to reload email modal
+  }
+
+  const formatResponseText = (text) => {
+    // Replace **bold** text with <strong> tags and remove unnecessary * symbols
+    const formattedText = text
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // Replace **word** with <strong>word</strong>
+      .replace(/\*{2,}/g, ""); // Remove any remaining * symbols
+
+    // Add <p> tags for line breaks and paragraphs
+    const paragraphs = formattedText
+      .split("\n")
+      .map((para, index) => (
+        <p key={index} dangerouslySetInnerHTML={{ __html: para }}></p>
+      ));
+
+    return paragraphs;
+  };
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -473,6 +595,67 @@ export default function Learn() {
                   </button>
                 </div>
               </>
+            )}
+          </div>
+
+          {/* Identify Phishing Emails */}
+          <div className="w-full max-w-2xl bg-white p-8 rounded-lg shadow-md mt-10">
+            {/* Email Content Modal */}
+            <div className="bg-gray-100 p-6 rounded-lg shadow-md">
+              <h2 className="text-xl font-semibold mb-4 text-center">
+                Can You Identify Phishing Emails?
+              </h2>
+              {loading ? <p>Loading email content...</p> : <p>{modelEmail}</p>}
+            </div>
+
+            {/* Buttons */}
+            <div className="mt-6 text-center">
+              <button
+                className="bg-green-500 text-white px-4 py-2 rounded-lg mx-2"
+                onClick={() =>
+                  handleButtonClick(
+                    "This is an email you generated to test if I can identify phishing emails: " +
+                      modelEmail +
+                      " I think this is a real email. Praise me if I'm right and tell me why I'm right. If I'm wrong, correct me and show me why I'm wrong. Highlights key stuffs like typos, wrongly wrtten emails and other important points. Highlight what makes it real or fake. Give short concise answers instead of large paragraphs."
+                  )
+                }
+                disabled={loading}
+              >
+                Real Email
+              </button>
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded-lg mx-2"
+                onClick={() =>
+                  handleButtonClick(
+                    "This is an email you generated to test if I can identify phishing emails: " +
+                      modelEmail +
+                      " I think this is a phishing email. Praise me if I'm right and tell me why I'm right. If I'm wrong, correct me and show me why I'm wrong. Highlights key stuffs like typos, wrongly wrtten emails and other important points. Highlight what makes it real or fake. Give short concise answers instead of large paragraphs."
+                  )
+                }
+                disabled={loading}
+              >
+                Phishing Email
+              </button>
+            </div>
+
+            {isResponseModalOpen && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                <div
+                  className="bg-white w-96 h-96 p-6 rounded-lg shadow-lg overflow-y-auto"
+                  style={{ maxHeight: "90vh" }} // Ensure responsiveness
+                >
+                  <h2 className="text-lg font-bold mb-4 text-center">
+                    AI Response
+                  </h2>
+                  <p>{formatResponseText(aiResponse)}</p>
+                  <button
+                    className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg w-full"
+                    onClick={handleModalClose}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
